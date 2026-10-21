@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f7f2">
+  <title>문자 위험 확인 | 안심노트</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18251f;
+      --muted: #68766f;
+      --line: #e2e8e2;
+      --paper: #ffffff;
+      --canvas: #f6f7f2;
+      --green: #176b4b;
+      --green-dark: #10553b;
+      --green-soft: #edf6f0;
+      --amber: #9a6418;
+      --amber-soft: #fff7e9;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--canvas);
+      color: var(--ink);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .topbar {
+      height: 72px;
+      border-bottom: 1px solid rgba(24, 37, 31, .08);
+      background: rgba(255,255,255,.82);
+      display: flex;
+      align-items: center;
+    }
+    .topbar-inner, main { width: min(100% - 40px, 920px); margin: 0 auto; }
+    .brand { display: flex; align-items: center; gap: 11px; font-weight: 750; letter-spacing: -.03em; }
+    .brand-mark {
+      display: grid; place-items: center; width: 36px; height: 36px; border-radius: 12px;
+      background: var(--green); color: white; font-size: 18px;
+    }
+    .brand span:last-child { font-size: 17px; }
+    .local-tag { margin-left: auto; color: var(--muted); font-size: 12px; font-weight: 650; }
+    main { padding: 52px 0 76px; }
+    .eyebrow { color: var(--green); font-size: 13px; font-weight: 750; letter-spacing: .02em; }
+    h1 { margin: 12px 0 12px; font-size: clamp(30px, 5vw, 42px); line-height: 1.22; letter-spacing: -.055em; }
+    .intro { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.75; }
+    .steps {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin: 35px 0 28px;
+      padding: 19px 20px; border: 1px solid var(--line); border-radius: 16px; background: rgba(255,255,255,.66);
+    }
+    .step { display: flex; align-items: center; gap: 10px; min-width: 0; color: #98a39d; font-size: 13px; font-weight: 650; }
+    .step:not(:last-child)::after { content: ""; height: 1px; flex: 1; margin: 0 13px 0 2px; background: #e5e9e5; }
+    .step-number { display: grid; flex: 0 0 28px; place-items: center; width: 28px; height: 28px; border: 1px solid #d9e0da; border-radius: 50%; font-size: 12px; }
+    .step.active { color: var(--green-dark); }
+    .step.active .step-number { border-color: var(--green); background: var(--green); color: white; }
+    .step.done { color: var(--green-dark); }
+    .step.done .step-number { border-color: #a8cfb8; background: var(--green-soft); color: var(--green-dark); }
+    .step-label { white-space: nowrap; }
+    .card { padding: clamp(22px, 5vw, 38px); border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 18px 50px rgba(29, 54, 40, .055); }
+    .card-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 25px; }
+    h2 { margin: 0 0 7px; font-size: 21px; letter-spacing: -.035em; }
+    .card-subtitle { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border-radius: 999px; background: var(--green-soft); color: var(--green-dark); font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: #45a274; }
+    label { display: block; margin-bottom: 10px; font-size: 14px; font-weight: 750; }
+    textarea {
+      display: block; width: 100%; min-height: 220px; resize: vertical; padding: 17px 18px;
+      border: 1px solid #dce4dd; border-radius: 13px; outline: none; background: #fcfdfb;
+      color: var(--ink); font: inherit; font-size: 15px; line-height: 1.7; transition: border-color .18s, box-shadow .18s;
+    }
+    textarea::placeholder { color: #a2ada6; }
+    textarea:focus { border-color: #63a785; box-shadow: 0 0 0 4px rgba(57, 137, 94, .11); }
+    .field-meta { display: flex; justify-content: space-between; gap: 12px; margin-top: 9px; color: #7c8981; font-size: 12px; }
+    .safety-note { display: flex; gap: 11px; margin-top: 22px; padding: 15px 16px; border-radius: 12px; background: var(--amber-soft); color: #76521f; font-size: 13px; line-height: 1.65; }
+    .safety-icon { flex: 0 0 auto; font-size: 16px; }
+    .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+    button { min-height: 46px; padding: 0 18px; border: 0; border-radius: 11px; font: inherit; font-size: 14px; font-weight: 750; cursor: pointer; transition: transform .15s, background .15s; }
+    button:active { transform: translateY(1px); }
+    .clear { background: #f1f4f1; color: #526057; }
+    .clear:hover { background: #e8ede9; }
+    .submit { display: inline-flex; align-items: center; gap: 9px; background: var(--green); color: white; }
+    .submit:hover { background: var(--green-dark); }
+    .submit:disabled { opacity: .58; cursor: wait; }
+    .notice { margin: 0 0 20px; padding: 13px 15px; border: 1px solid #cde7d6; border-radius: 11px; background: #f1faf4; color: #175b3e; font-size: 14px; line-height: 1.55; }
+    .notice[hidden] { display: none; }
+    .results { margin-top: 22px; padding-top: 23px; border-top: 1px solid var(--line); }
+    .results[hidden] { display: none; }
+    .results-heading { display:flex; align-items:flex-start; justify-content:space-between; gap: 12px; margin-bottom: 17px; }
+    .results-heading h3 { margin:0 0 5px; font-size:17px; letter-spacing:-.03em; }
+    .results-heading p { margin:0; color:var(--muted); font-size:12px; line-height:1.55; }
+    .public-summary { padding:20px; border:1px solid var(--line); border-radius:15px; background:#f8faf7; }
+    .public-summary[data-level="high"] { border-color:#efc7c0; background:#fff7f5; }
+    .public-summary[data-level="medium"] { border-color:#ecd9ae; background:#fffaf0; }
+    .public-summary[data-level="low"] { border-color:#cde7d6; background:#f5faf6; }
+    .public-row { display:grid; grid-template-columns:92px 1fr; gap:10px; padding:12px 0; border-top:1px solid rgba(45,60,49,.1); }
+    .public-row:first-child { border-top:0; padding-top:0; }
+    .public-row:last-child { padding-bottom:0; }
+    .public-label { color:#68766f; font-size:13px; font-weight:750; }
+    .public-value { margin:0; color:#24342a; font-size:14px; line-height:1.7; }
+    .public-verdict { display:inline-flex; align-items:center; min-height:27px; padding:3px 11px; border-radius:999px; background:#e9eee9; color:#536258; font-size:13px; font-weight:850; }
+    [data-level="high"] .public-verdict { background:#fde6e1; color:#a13e2e; }
+    [data-level="medium"] .public-verdict { background:#fff0cc; color:#89600e; }
+    [data-level="low"] .public-verdict { background:#ddf0e3; color:#176b4b; }
+    .public-reasons { display:grid; gap:5px; margin:0; padding-left:19px; color:#34443a; font-size:14px; line-height:1.65; }
+    .decision-explanation { margin:16px 0 0; padding:15px 16px; border:1px solid rgba(45,60,49,.1); border-radius:12px; background:rgba(255,255,255,.72); }
+    .decision-explanation h5 { margin:0 0 7px; color:#34443a; font-size:13px; }
+    .decision-explanation p { margin:0; color:#526057; font-size:13px; line-height:1.65; }
+    .score-factors { display:grid; gap:6px; margin:11px 0 0; padding:0; list-style:none; }
+    .score-factor { display:flex; justify-content:space-between; gap:12px; color:#526057; font-size:12px; line-height:1.55; }
+    .score-points { flex:0 0 auto; color:#176b4b; font-weight:800; }
+    .score-note { margin-top:10px !important; color:#7b877f !important; font-size:11px !important; }
+    .details { margin-top:13px; border:1px solid var(--line); border-radius:12px; background:#fff; }
+    .details > summary { display:flex; justify-content:space-between; gap:12px; padding:13px 15px; color:#58665d; font-size:12px; font-weight:750; cursor:pointer; list-style:none; }
+    .details > summary::-webkit-details-marker { display:none; }
+    .details > summary::after { content:"＋"; color:#728078; }
+    .details[open] > summary::after { content:"－"; }
+    .detail-count { color:#87928a; font-size:11px; font-weight:500; }
+    .details-body { padding:0 15px 15px; }
+    .risk-assessment { margin-bottom:17px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#f8faf7; }
+    .risk-assessment[data-level="high"] { border-color:#efc7c0; background:#fff7f5; }
+    .risk-assessment[data-level="medium"] { border-color:#ecd9ae; background:#fffaf0; }
+    .risk-assessment[data-level="low"] { border-color:#cde7d6; background:#f5faf6; }
+    .risk-heading { display:flex; align-items:flex-start; gap:12px; }
+    .risk-symbol { display:grid; flex:0 0 30px; place-items:center; width:30px; height:30px; border-radius:10px; background:#e8ede8; color:#536258; font-weight:850; }
+    [data-level="high"] .risk-symbol { background:#fde6e1; color:#a13e2e; }
+    [data-level="medium"] .risk-symbol { background:#fff0cc; color:#89600e; }
+    [data-level="low"] .risk-symbol { background:#ddf0e3; color:#176b4b; }
+    .risk-label { display:block; margin:1px 0 5px; color:#536258; font-size:12px; font-weight:800; }
+    [data-level="high"] .risk-label { color:#a13e2e; }
+    [data-level="medium"] .risk-label { color:#89600e; }
+    [data-level="low"] .risk-label { color:#176b4b; }
+    .risk-summary { margin:0; color:#38453d; font-size:14px; line-height:1.65; }
+    .reputation-checks { margin-top:16px; padding-top:14px; border-top:1px solid rgba(45,60,49,.1); }
+    .reputation-heading { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:9px; }
+    .reputation-heading h4 { margin:0; color:#536258; font-size:11px; }
+    .mock-tag { padding:4px 8px; border:1px solid #d8e4d9; border-radius:999px; background:#f1f6f1; color:#536b58; font-size:10px; font-weight:800; }
+    .rep-item { display:flex; align-items:flex-start; gap:8px; }
+    .rep-status { flex:0 0 auto; padding:3px 7px; border-radius:999px; background:#ecefeb; color:#58645b; font-size:10px; font-weight:800; }
+    .rep-status.listed { background:#fde6e1; color:#a13e2e; }
+    .rep-status.not_listed { background:#ddf0e3; color:#176b4b; }
+    .rep-copy { min-width:0; overflow-wrap:anywhere; }
+    .rep-copy .defanged { display:block; margin-bottom:2px; }
+    .risk-lists { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px; padding-top:14px; border-top:1px solid rgba(45,60,49,.1); }
+    .risk-list-title { margin:0 0 7px; color:#536258; font-size:11px; font-weight:800; }
+    .risk-list { display:grid; gap:6px; margin:0; padding-left:17px; color:#4d5b51; font-size:11px; line-height:1.55; }
+    .risk-method { margin:13px 0 0; color:#7b877f; font-size:10px; line-height:1.55; }
+    .result-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .result-box { min-width:0; padding:15px; border:1px solid var(--line); border-radius:12px; background:#fcfdfb; }
+    .result-box h4 { margin:0 0 11px; color:#526057; font-size:12px; }
+    .result-list { display:grid; gap:9px; margin:0; padding:0; list-style:none; }
+    .result-item { overflow-wrap:anywhere; color:#26352c; font-size:13px; line-height:1.55; }
+    .result-detail { display:block; margin-top:2px; color:#7b877f; font-size:11px; }
+    .empty-result { color:#8a958d; font-size:12px; }
+    .defanged { font-family:ui-monospace,Consolas,monospace; color:#285c43; }
+    .risk-chip { display:inline-flex; margin-right:5px; padding:2px 7px; border-radius:999px; background:#f2f3ec; color:#626a4e; font-size:10px; font-weight:750; vertical-align:1px; }
+    footer { margin-top: 21px; color: #849087; font-size: 12px; line-height: 1.7; text-align: center; }
+    @media (max-width: 650px) {
+      .topbar { height: 62px; }
+      .topbar-inner, main { width: min(100% - 28px, 920px); }
+      main { padding-top: 36px; }
+      .steps { grid-template-columns: repeat(4, 1fr); padding: 14px 10px; }
+      .step { flex-direction: column; gap: 6px; font-size: 11px; }
+      .step:not(:last-child)::after { display: none; }
+      .step-label { white-space: normal; text-align: center; }
+      .card-heading { flex-direction: column; }
+      .safety-note { font-size: 12px; }
+      .result-grid { grid-template-columns:1fr; }
+      .risk-lists { grid-template-columns:1fr; }
+      .public-row { grid-template-columns:1fr; gap:5px; }
+      .details > summary { flex-wrap:wrap; }
+    }
+    @media (max-width: 390px) { .local-tag { font-size: 11px; } .actions button { flex: 1; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner" style="display:flex;align-items:center;width:min(100% - 40px, 920px);margin:0 auto">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">안</span><span>안심노트</span></div>
+      <span class="local-tag">문자 위험 확인 서비스</span>
+    </div>
+  </header>
+  <main>
+    <div class="eyebrow">STEP 03 · 위험 분석</div>
+    <h1>문자에 담긴 위험 징후와<br>판단 근거를 확인해 보세요</h1>
+    <p class="intro">본문 표현과 URL 형태를 살펴보고 의심 신호를 정리합니다.<br>링크를 열지 않고 분석하며, 결과는 참고 정보로 제공합니다.</p>
+
+    <nav class="steps" aria-label="서비스 진행 단계">
+      <div class="step done"><span class="step-number">✓</span><span class="step-label">문자 접수</span></div>
+      <div class="step done"><span class="step-number">✓</span><span class="step-label">내용 정리</span></div>
+      <div class="step active" aria-current="step"><span class="step-number">3</span><span class="step-label">위험 분석</span></div>
+      <div class="step"><span class="step-number">4</span><span class="step-label">결과 확인</span></div>
+    </nav>
+
+    <section class="card" aria-labelledby="form-title">
+      <div class="card-heading">
+        <div>
+          <h2 id="form-title">의심 문자 내용 입력</h2>
+          <p class="card-subtitle">발신 번호와 문자에 포함된 링크도 함께 붙여 넣어 주세요.</p>
+        </div>
+        <span class="badge"><span class="badge-dot" aria-hidden="true"></span>안전한 접수</span>
+      </div>
+
+      <div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
+      <form action="/submit" method="post" id="intake-form">
+        <label for="message">문자 내용</label>
+        <textarea id="message" name="message" maxlength="5000" required placeholder="여기에 의심 문자를 붙여 넣어 주세요.&#10;&#10;예) [택배] 주소 오류로 배송이 보류되었습니다. 아래 링크에서 확인해 주세요: https://example.com"></textarea>
+        <div class="field-meta"><span>개인정보나 인증번호가 있다면 가린 뒤 입력해 주세요.</span><span><span id="count">0</span> / 5,000자</span></div>
+
+        <div class="safety-note"><span class="safety-icon" aria-hidden="true">ⓘ</span><span><strong>모의 연동 안내</strong><br>입력 내용은 저장하지 않습니다. 현재 URL 평판은 시연용 모의 서비스가 로컬 테스트 데이터로 응답하며, 실제 외부 서비스에는 연결되지 않습니다. 링크도 자동으로 열지 않습니다.</span></div>
+        <div class="actions">
+          <button class="clear" type="reset">내용 지우기</button>
+          <button class="submit" type="submit" id="submit-button">위험 분석하기 <span aria-hidden="true">→</span></button>
+        </div>
+      </form>
+      <section class="results" id="results" aria-live="polite" hidden>
+        <div class="results-heading">
+          <div><h3>피싱 의심 문자 분석 결과</h3><p>판정과 대응 방법을 간단히 정리했습니다.</p></div>
+          <span class="badge"><span class="badge-dot" aria-hidden="true"></span>3단계 분석 완료</span>
+        </div>
+        <section class="public-summary" id="public-summary" data-level="low" aria-labelledby="public-title">
+          <h4 id="public-title" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0">피싱 의심 문자 분석 요약</h4>
+          <div class="public-row"><span class="public-label">판정</span><div><span class="public-verdict" id="public-verdict">확인 필요</span></div></div>
+          <div class="public-row"><span class="public-label">근거</span><ul class="public-reasons" id="public-reasons"></ul></div>
+          <div class="decision-explanation" aria-labelledby="decision-title">
+            <h5 id="decision-title">판정은 이렇게 나왔어요</h5>
+            <p id="decision-explanation"></p>
+            <ul class="score-factors" id="score-factors"></ul>
+            <p class="score-note">시연용 규칙 점수입니다. 실제 피싱일 확률이나 공식 기관의 판정을 뜻하지 않으며, 낮은 점수도 안전을 보장하지 않습니다.</p>
+          </div>
+          <div class="public-row"><span class="public-label">권장 행동</span><p class="public-value" id="recommended-action"></p></div>
+        </section>
+        <details class="details">
+          <summary><span>세부 분석 결과 보기</span><span class="detail-count" id="result-summary"></span></summary>
+          <div class="details-body">
+            <section class="risk-assessment" id="risk-assessment" data-level="low" aria-labelledby="risk-label">
+              <div class="risk-heading">
+                <span class="risk-symbol" id="risk-symbol" aria-hidden="true">i</span>
+                <div><span class="risk-label" id="risk-label">위험 징후 분석</span><p class="risk-summary" id="risk-summary"></p></div>
+              </div>
+              <div class="reputation-checks">
+                <div class="reputation-heading"><h4>URL 평판 조회 · 로컬 모의 서비스</h4><span class="mock-tag">모의 데이터</span></div>
+                <ul class="risk-list" id="reputation-results"></ul>
+              </div>
+              <div class="risk-lists">
+                <div><h4 class="risk-list-title">판단 근거</h4><ul class="risk-list" id="risk-evidence"></ul></div>
+                <div><h4 class="risk-list-title">분석 한계</h4><ul class="risk-list" id="risk-limitations"></ul></div>
+              </div>
+              <p class="risk-method" id="risk-method"></p>
+            </section>
+            <div class="result-grid">
+              <section class="result-box"><h4>URL 및 도메인 후보</h4><ul class="result-list" id="url-results"></ul></section>
+              <section class="result-box"><h4>기관·서비스명 후보</h4><ul class="result-list" id="institution-results"></ul></section>
+              <section class="result-box"><h4>의심 표현 후보</h4><ul class="result-list" id="indicator-results"></ul></section>
+              <section class="result-box"><h4>전화번호 후보</h4><ul class="result-list" id="phone-results"></ul></section>
+            </div>
+          </div>
+        </details>
+      </section>
+    </section>
+    <footer>의심 문자의 링크를 직접 열지 말고, 기관의 공식 앱이나 대표 번호로 별도 확인하세요.</footer>
+  </main>
+  <script>
+    const field = document.querySelector('#message');
+    const count = document.querySelector('#count');
+    const form = document.querySelector('#intake-form');
+    const notice = document.querySelector('#notice');
+    const submit = document.querySelector('#submit-button');
+    const results = document.querySelector('#results');
+    const assessment = document.querySelector('#risk-assessment');
+    const publicSummary = document.querySelector('#public-summary');
+    const updateCount = () => { count.textContent = field.value.length.toLocaleString('ko-KR'); };
+    field.addEventListener('input', updateCount);
+    form.addEventListener('reset', () => requestAnimationFrame(updateCount));
+    const defang = (value) => value.replaceAll('.', '[.]').replace('://', '[:]//');
+    const fillList = (elementId, items, renderItem) => {
+      const list = document.getElementById(elementId);
+      list.replaceChildren();
+      if (!items.length) {
+        const empty = document.createElement('li');
+        empty.className = 'empty-result';
+        empty.textContent = '발견된 항목이 없습니다.';
+        list.append(empty);
+        return;
+      }
+      items.forEach((item) => { const li = document.createElement('li'); li.className = 'result-item'; renderItem(li, item); list.append(li); });
+    };
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!field.value.trim()) { field.focus(); return; }
+      submit.disabled = true;
+      submit.textContent = '분석 중…';
+      notice.hidden = true;
+      results.hidden = true;
+      try {
+        const response = await fetch('/api/submit', { method: 'POST', body: new URLSearchParams(new FormData(form)) });
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || '입력 내용을 다시 확인해 주세요.');
+        notice.textContent = data.message;
+        notice.hidden = false;
+        fillList('url-results', data.urls, (li, item) => {
+          const raw = document.createElement('span'); raw.className = 'defanged'; raw.textContent = defang(item.original);
+          const detail = document.createElement('span'); detail.className = 'result-detail'; detail.textContent = `도메인: ${defang(item.domain)} · ${item.note}`;
+          li.append(raw, detail);
+        });
+        fillList('institution-results', data.institutions, (li, item) => {
+          li.textContent = item;
+          const detail = document.createElement('span'); detail.className = 'result-detail'; detail.textContent = '본문에서 발견한 기관·서비스명 후보';
+          li.append(detail);
+        });
+        fillList('indicator-results', data.indicators, (li, item) => {
+          const chip = document.createElement('span'); chip.className = 'risk-chip'; chip.textContent = item.category;
+          const phrase = document.createElement('span'); phrase.textContent = item.phrase;
+          li.append(chip, phrase);
+        });
+        fillList('phone-results', data.phones, (li, item) => { li.textContent = item; });
+        assessment.dataset.level = data.risk_analysis.level;
+        publicSummary.dataset.level = data.risk_analysis.level;
+        document.querySelector('#public-verdict').textContent = data.risk_analysis.public_verdict;
+        fillList('public-reasons', data.risk_analysis.public_reasons, (li, item) => { li.textContent = item; });
+        document.querySelector('#decision-explanation').textContent = data.risk_analysis.decision_explanation;
+        fillList('score-factors', data.risk_analysis.score_factors, (li, item) => {
+          li.classList.add('score-factor');
+          const reason = document.createElement('span'); reason.textContent = item.reason;
+          const points = document.createElement('span'); points.className = 'score-points'; points.textContent = `+${item.points}점`;
+          li.append(reason, points);
+        });
+        document.querySelector('#recommended-action').textContent = data.risk_analysis.recommended_action;
+        document.querySelector('#risk-label').textContent = data.risk_analysis.label;
+        document.querySelector('#risk-symbol').textContent = data.risk_analysis.level === 'low' ? 'i' : '!';
+        document.querySelector('#risk-summary').textContent = data.risk_analysis.summary;
+        fillList('reputation-results', data.reputation, (li, item) => {
+          li.classList.add('rep-item');
+          const status = document.createElement('span'); status.className = `rep-status ${item.status}`; status.textContent = item.label;
+          const copy = document.createElement('span'); copy.className = 'rep-copy';
+          const url = document.createElement('span'); url.className = 'defanged'; url.textContent = defang(item.url);
+          const detail = document.createElement('span'); detail.className = 'result-detail'; detail.textContent = `${item.detail}${item.threat_types.length ? ` · 분류: ${item.threat_types.join(', ')}` : ''}`;
+          copy.append(url, detail);
+          li.append(status, copy);
+        });
+        fillList('risk-evidence', data.risk_analysis.evidence, (li, item) => { li.textContent = item; });
+        fillList('risk-limitations', data.risk_analysis.limitations, (li, item) => { li.textContent = item; });
+        document.querySelector('#risk-method').textContent = `분석 방법: ${data.risk_analysis.method}`;
+        document.querySelector('#result-summary').textContent = `URL ${data.urls.length}개 · 기관명 후보 ${data.institutions.length}개 · 의심 표현 ${data.indicators.length}개 · 전화번호 ${data.phones.length}개`;
+        results.hidden = false;
+        results.scrollIntoView({behavior:'smooth', block:'nearest'});
+      } catch (error) {
+        notice.textContent = error.message || '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
+        notice.hidden = false;
+        notice.style.background = '#fff3f1';
+        notice.style.borderColor = '#f0cbc5';
+        notice.style.color = '#8d3629';
+      } finally {
+        submit.disabled = false;
+        submit.innerHTML = '위험 분석하기 <span aria-hidden="true">→</span>';
+      }
+    });
+  </script>
+</body>
+</html>
