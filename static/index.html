@@ -183,15 +183,15 @@
     </div>
   </header>
   <main>
-    <div class="eyebrow">STEP 03 · 위험 분석</div>
+    <div class="eyebrow" id="stage-caption">STEP 01 · 문자 접수</div>
     <h1>문자에 담긴 위험 징후와<br>판단 근거를 확인해 보세요</h1>
     <p class="intro">본문 표현과 URL 형태를 살펴보고 의심 신호를 정리합니다.<br>링크를 열지 않고 분석하며, 결과는 참고 정보로 제공합니다.</p>
 
     <nav class="steps" aria-label="서비스 진행 단계">
-      <div class="step done"><span class="step-number">✓</span><span class="step-label">문자 접수</span></div>
-      <div class="step done"><span class="step-number">✓</span><span class="step-label">내용 정리</span></div>
-      <div class="step active" aria-current="step"><span class="step-number">3</span><span class="step-label">위험 분석</span></div>
-      <div class="step"><span class="step-number">4</span><span class="step-label">결과 확인</span></div>
+      <div class="step active" data-stage="1" aria-current="step"><span class="step-number">1</span><span class="step-label">문자 접수</span></div>
+      <div class="step" data-stage="2"><span class="step-number">2</span><span class="step-label">내용 정리</span></div>
+      <div class="step" data-stage="3"><span class="step-number">3</span><span class="step-label">위험 분석</span></div>
+      <div class="step" data-stage="4"><span class="step-number">4</span><span class="step-label">결과 확인</span></div>
     </nav>
 
     <section class="card" aria-labelledby="form-title">
@@ -271,9 +271,37 @@
     const results = document.querySelector('#results');
     const assessment = document.querySelector('#risk-assessment');
     const publicSummary = document.querySelector('#public-summary');
+    const stageCaption = document.querySelector('#stage-caption');
+    const stageNames = ['문자 접수', '내용 정리', '위험 분석', '결과 확인'];
+    const steps = [...document.querySelectorAll('.step[data-stage]')];
     const updateCount = () => { count.textContent = field.value.length.toLocaleString('ko-KR'); };
-    field.addEventListener('input', updateCount);
-    form.addEventListener('reset', () => requestAnimationFrame(updateCount));
+    const setStage = (stage) => {
+      steps.forEach((step) => {
+        const number = Number(step.dataset.stage);
+        const active = number === stage;
+        step.classList.toggle('active', active);
+        step.classList.toggle('done', number < stage);
+        if (active) step.setAttribute('aria-current', 'step');
+        else step.removeAttribute('aria-current');
+        step.querySelector('.step-number').textContent = number < stage ? '✓' : String(number);
+      });
+      stageCaption.textContent = `STEP ${String(stage).padStart(2, '0')} · ${stageNames[stage - 1]}`;
+    };
+    field.addEventListener('input', () => {
+      updateCount();
+      if (!results.hidden) {
+        results.hidden = true;
+        notice.hidden = true;
+      }
+      if (!submit.disabled) setStage(field.value.trim() ? 2 : 1);
+    });
+    form.addEventListener('reset', () => requestAnimationFrame(() => {
+      updateCount();
+      notice.hidden = true;
+      results.hidden = true;
+      setStage(1);
+    }));
+    setStage(1);
     const defang = (value) => value.replaceAll('.', '[.]').replace('://', '[:]//');
     const fillList = (elementId, items, renderItem) => {
       const list = document.getElementById(elementId);
@@ -294,6 +322,7 @@
       submit.textContent = '분석 중…';
       notice.hidden = true;
       results.hidden = true;
+      setStage(3);
       try {
         const response = await fetch('/api/submit', { method: 'POST', body: new URLSearchParams(new FormData(form)) });
         const data = await response.json();
@@ -345,8 +374,10 @@
         document.querySelector('#risk-method').textContent = `분석 방법: ${data.risk_analysis.method}`;
         document.querySelector('#result-summary').textContent = `URL ${data.urls.length}개 · 기관명 후보 ${data.institutions.length}개 · 의심 표현 ${data.indicators.length}개 · 전화번호 ${data.phones.length}개`;
         results.hidden = false;
+        setStage(4);
         results.scrollIntoView({behavior:'smooth', block:'nearest'});
       } catch (error) {
+        setStage(field.value.trim() ? 2 : 1);
         notice.textContent = error.message || '서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.';
         notice.hidden = false;
         notice.style.background = '#fff3f1';
